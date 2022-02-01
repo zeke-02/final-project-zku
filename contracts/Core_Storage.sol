@@ -1,0 +1,3 @@
+// stores group => static root and msg attestations within that group.
+// should you be able to delete a root.
+// dynamic root but then you need a password ...
