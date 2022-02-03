@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@ethersproject/random": "^5.5.1",
     "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",
     "@nomiclabs/hardhat-waffle": "^2.0.2",
@@ -24,7 +25,7 @@
     "@zk-kit/types": "^1.0.9",
     "chai": "^4.3.6",
     "circomlib": "^2.0.2",
-    "circomlibjs": "^0.1.1",
+    "circomlibjs": "^0.0.8",
     "dotenv": "^10.0.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
@@ -46,7 +47,10 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
+    "@zk-kit/protocols": "^1.2.4",
     "bigint-conversion": "^2.2.1",
+    "circom-helper": "^0.3.3",
+    "ffjavascript": "^0.2.48",
     "js-sha256": "^0.9.0",
     "snarkjs": "^0.4.13"
   }

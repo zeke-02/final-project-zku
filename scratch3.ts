@@ -1,0 +1,7 @@
+import { poseidon } from "circomlibjs"
+
+(async()=> {
+    let res = poseidon([1,2]);
+    console.log(res.toString(10));
+    //115cc0f5e7d690413df64c6b9662e9cf2a3617f2743245519e19607a4417189a
+})()

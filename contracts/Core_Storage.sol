@@ -1,3 +1,6 @@
-// stores group => static root and msg attestations within that group.
-// should you be able to delete a root.
-// dynamic root but then you need a password ...
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+contract Counter {
+    mapping (uint256 => uint256) public roots;
+}
