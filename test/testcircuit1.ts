@@ -74,8 +74,9 @@ function genRandomNumber(numberOfBytes = 31): bigint {
     });
     let salt = poseidon([BigInt("0x" + sha256("a salt"))]);
     let msg = poseidon([BigInt("0x" + sha256(body))]);
+    console.log(msg);
     //console.log(F.toObject(msg).toString())
-;    const input = {
+    /* const input = {
         root: root,
         leaf: F.toObject(leaf),
         path_elements: path_elements,
@@ -103,5 +104,5 @@ function genRandomNumber(numberOfBytes = 31): bigint {
       const calldata = await snarkjs.groth16.exportSolidityCallData(
         editedProof,
         editedPublicSignals
-      );
+      ); */
 })()

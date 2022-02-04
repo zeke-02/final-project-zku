@@ -7,9 +7,6 @@ include "./incrementalQuinTree.circom";
 //  - Prove root and leaves are correct for an incrementalQuinTree
 ////////////////////////////////////////////
 
-
-
-// component main {public [root]} = Main(4);
 template Main (levels) {
     var LEAVES_PER_NODE = 5;
     var LEAVES_PER_PATH_LEVEL = LEAVES_PER_NODE - 1;

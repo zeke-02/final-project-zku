@@ -11,7 +11,7 @@ include "./incrementalQuinTree.circom";
 //  - msg is poseidon hash of message.
 ////////////////////////////////////////////
 
-template Main(levels) {
+template SendMessage(levels) {
 
     var LEAVES_PER_NODE = 5;
     var LEAVES_PER_PATH_LEVEL = LEAVES_PER_NODE - 1;
@@ -35,7 +35,7 @@ template Main(levels) {
     component verifier = QuinLeafExists(levels);
     verifier.leaf <== leaf;
     verifier.root <== root;
-    for (var i = 0; i < levels; i ++) {
+    for (i = 0; i < levels; i ++) {
         verifier.path_index[i] <== path_index[i];
         for (var j = 0; j < LEAVES_PER_PATH_LEVEL; j ++) {
             verifier.path_elements[i][j] <== path_elements[i][j];
@@ -55,4 +55,4 @@ template Main(levels) {
     msgAttestation <== hash2.out;
 }
 
-component main {public [root, msg]} = Main(4);
+component main {public [root, msg]} = SendMessage(4);

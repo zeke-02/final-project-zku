@@ -1,5 +1,5 @@
 import { IncrementalMerkleTree } from "@zk-kit/incremental-merkle-tree"
-import { hash5, genRandomSalt, stringifyBigInts, poseidon, prove, verify } from '../ts/utils'
+import { hash5, genRandomSalt, stringifyBigInts, poseidon, prove, verify, formatMessage } from '../ts/utils'
 import assert from 'assert';
 import { Proof } from '../ts/types'
 import { generateMerkleProof } from "@zk-kit/protocols"
@@ -8,7 +8,7 @@ const test = async () => {
     const tree = new IncrementalMerkleTree(hash5, 4, BigInt(0), 5);
     const secret = BigInt(1);
     const salt = BigInt(2);
-    const msg = BigInt(100);
+    const msg = ";aksjdf;lkasjdf;kjas;ldkjf;laksjdf;lkjasdl;kfj;laskjdf;ljas;ldkfj;alksjdf;lkajsdf;";
     const leaf = poseidon([secret]);
 
     tree.insert(leaf);
@@ -27,7 +27,7 @@ const test = async () => {
         leaf: proof.leaf,
         path_elements: proof.siblings,
         path_index: proof.pathIndices,
-        msg,
+        msg: formatMessage(msg),
         secret,
         salt
     }
@@ -38,10 +38,15 @@ const test = async () => {
     const msgAttestation = result.publicSignals[0];
     const input2 = {
         secret,
-        msg,
+        msg: formatMessage(msg),
+        leaf,
         salt,
-        msgAttestation
+        msgAttestation,
+        root: tree.root,
+        path_elements: proof.siblings,
+        path_index: proof.pathIndices,
     }
+    console.log(input2);
     const result2 = await prove(stringifyBigInts(input2),'reveal');
     console.log(result2);
     console.log(await verify(result2.proof, result2.publicSignals, 'reveal'));

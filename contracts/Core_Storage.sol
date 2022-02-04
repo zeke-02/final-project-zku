@@ -11,7 +11,7 @@ contract CoreStorage {
         uint256 root;
         uint256[] messageAttestations;
         uint256 currMessageAttestation;
-        mapping(uint256 => string) revealedMessages; // leaf/pubkey to string/message
+        mapping(uint256 => string[]) revealedMessages; // leaf/pubkey to string/message
     }
-    mapping(string => Group) records;
+    mapping(string => Group) records; // groupname to Group
 }

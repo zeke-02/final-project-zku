@@ -4,6 +4,7 @@ const snarkjs = require('snarkjs');
 import fs from 'fs';
 const ff = require('ffjavascript');
 const { poseidon } = require('circomlibjs');
+import { ethers } from 'ethers';
 
 // circom files
 const signZkey = '../circuits/sign/circuit_final.zkey';
@@ -31,6 +32,7 @@ const hash5 = (inputs: BigInt[]) => {
 }
 
 const SNARK_FIELD_SIZE = BigInt(21888242871839275222246405745257275088548364400416034343698204186575808495617);
+
 const genRandomSalt = (): BigInt => {
 
     // Prevent modulo bias
@@ -94,11 +96,16 @@ async function verify(proof:any, publicSignals:any, circuitType:string) {
     return res;
   }
 
+function formatMessage(str:string):BigInt {
+    return BigInt(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(str)));
+}
+
 export {
     hash5,
     genRandomSalt,
     stringifyBigInts,
     poseidon,
     prove,
-    verify
+    verify,
+    formatMessage
 }
