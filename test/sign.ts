@@ -33,8 +33,9 @@ const test = async () => {
         salt
     }
     console.log(input);
-    const result = await prove(stringifyBigInts(input));
-    console.log(await verify(result.proof, result.publicSignals));
+    const result = await prove(stringifyBigInts(input),'sign');
+    console.log(result);
+    console.log(await verify(result.proof, result.publicSignals, 'sign'));
 }
 
 test();

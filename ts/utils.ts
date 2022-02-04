@@ -1,19 +1,28 @@
 import { strict as assert } from 'assert';
 import * as crypto from 'crypto';
-const signZkey = '../circuits/sign/circuit_final.zkey';
-const signWasm = '../circuits/sign/circuit.wasm';
-const signWitnessFile = './circuits/sign/witness.wtns';
-const signVkey = '../circuits/sign/verification_key.json';
 const snarkjs = require('snarkjs');
 import fs from 'fs';
 const ff = require('ffjavascript');
 const { poseidon } = require('circomlibjs');
 
+// circom files
+const signZkey = '../circuits/sign/circuit_final.zkey';
+const signWasm = '../circuits/sign/circuit.wasm';
+const signWitnessFile = './circuits/sign/witness.wtns';
+const signVkey = '../circuits/sign/verification_key.json';
+
+const createGroupZkey = '../circuits/createGroup/circuit_final.zkey';
+const createGroupWasm = '../circuits/createGroup/circuit.wasm';
+const createGroupWitnessFile = './circuits/createGroup/witness.wtns';
+const createGroupVkey = '../circuits/createGroup/verification_key.json';
+
+const revealZkey = '../circuits/reveal/circuit_final.zkey';
+const revealWasm = '../circuits/reveal/circuit.wasm';
+const revealWitnessFile = './circuits/reveal/witness.wtns';
+const revealVkey = '../circuits/reveal/verification_key.json';
+
+
 const stringifyBigInts: (obj: object) => any = ff.utils.stringifyBigInts
-
-
-
-
 
 // Hash up to 5 elements
 const hash5 = (inputs: BigInt[]) => {
@@ -44,20 +53,46 @@ const genRandomSalt = (): BigInt => {
     return privKey
 }
 
-async function prove (inputs: Object) {
+async function prove(inputs: Object, circuitType:string) {
+    let wasm;
+    let zkey;
+    if (circuitType == 'sign'){
+        wasm = signWasm;
+        zkey = signZkey;
+    } else if (circuitType == 'check-root'){
+        wasm = createGroupWasm;
+        zkey = createGroupZkey;
+    } else if (circuitType == 'reveal') {
+        wasm = revealWasm;
+        zkey = revealZkey;
+    } else {
+        return { proof: null, publicSignals: null};
+    }
     const { proof, publicSignals } = await snarkjs.groth16.fullProve(
         inputs,
-        signWasm,
-        signZkey,
+        wasm,
+        zkey,
       );
+    
     return {proof, publicSignals};
+    
 }
-async function verify(proof:any, publicSignals:any) { 
-    let vKey = JSON.parse(fs.readFileSync(signVkey, 'utf8'));
+
+async function verify(proof:any, publicSignals:any, circuitType:string) { 
+    let vkeyFile;
+    if (circuitType == 'sign'){
+        vkeyFile = signVkey;
+    } else if (circuitType == 'check-root') {
+        vkeyFile = createGroupVkey;
+    } else if (circuitType == 'reveal'){
+        vkeyFile = revealVkey;
+    } else {
+        return null;
+    }
+    let vKey = JSON.parse(fs.readFileSync(vkeyFile, 'utf8'));
     const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
     return res;
   }
-
 
 export {
     hash5,
