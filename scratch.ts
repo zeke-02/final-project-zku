@@ -2,7 +2,7 @@ import { IncrementalMerkleTree, HashFunction } from "@zk-kit/incremental-merkle-
 const buildPoseidon = require("circomlibjs").buildPoseidon;
 const buildMimc = require("circomlibjs").buildMimc;
 import { bufToBigint } from "bigint-conversion"
-import { ZkIdentity,  Strategy } from "@zk-kit/identity"
+import { ZkIdentity } from "@zk-kit/identity"
 import { sha256 as _sha256 } from "js-sha256"
 
 //identities to store the leaf, plus the root, plus a tree should be able to generate the proof off chain, emit leaves and order of leaves. static level = 4.
