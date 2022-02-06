@@ -14,8 +14,12 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "noEmit": false,
-    "noImplicitThis": false
+    "noImplicitThis": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx"
   },
-  "include": ["./scripts", "./test", "./typechain"],
+  "include": ["./scripts", "./test", "./typechain", "test-circuits/testcircuit1.ts"],
   "files": ["./hardhat.config.ts"]
 }

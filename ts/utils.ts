@@ -5,22 +5,28 @@ import fs from 'fs';
 const ff = require('ffjavascript');
 const { poseidon } = require('circomlibjs');
 import { ethers } from 'ethers';
+const {unstringifyBigInts} = ff.utils;
 
 // circom files
-const signZkey = '../circuits/sign/circuit_final.zkey';
-const signWasm = '../circuits/sign/circuit.wasm';
+const signZkey = './circuits/sign/circuit_final.zkey';
+const signWasm = './circuits/sign/circuit.wasm';
 const signWitnessFile = './circuits/sign/witness.wtns';
-const signVkey = '../circuits/sign/verification_key.json';
+const signVkey = './circuits/sign/verification_key.json';
 
-const createGroupZkey = '../circuits/createGroup/circuit_final.zkey';
-const createGroupWasm = '../circuits/createGroup/circuit.wasm';
+const createGroupZkey = './circuits/createGroup/circuit_final.zkey';
+const createGroupWasm = './circuits/createGroup/circuit.wasm';
 const createGroupWitnessFile = './circuits/createGroup/witness.wtns';
-const createGroupVkey = '../circuits/createGroup/verification_key.json';
+const createGroupVkey = './circuits/createGroup/verification_key.json';
 
-const revealZkey = '../circuits/reveal/circuit_final.zkey';
-const revealWasm = '../circuits/reveal/circuit.wasm';
+const revealZkey = './circuits/reveal/circuit_final.zkey';
+const revealWasm = './circuits/reveal/circuit.wasm';
 const revealWitnessFile = './circuits/reveal/witness.wtns';
-const revealVkey = '../circuits/reveal/verification_key.json';
+const revealVkey = './circuits/reveal/verification_key.json';
+
+const registerZkey = './circuits/registerUser/circuit_final.zkey';
+const registerWasm = './circuits/registerUser/circuit.wasm';
+const registerWitnessFile = './circuits/registerUser/witness.wtns';
+const registerVkey = './circuits/registerUser/verification_key.json';
 
 
 const stringifyBigInts: (obj: object) => any = ff.utils.stringifyBigInts
@@ -33,7 +39,9 @@ const hash5 = (inputs: BigInt[]) => {
 
 const SNARK_FIELD_SIZE = BigInt(21888242871839275222246405745257275088548364400416034343698204186575808495617);
 
-const genRandomSalt = (): BigInt => {
+type circuitTypes = "sign" | "check-root" | "reveal" | "register";
+
+const genRandomSalt = (): bigint => {
 
     // Prevent modulo bias
     //const lim = BigInt('0x10000000000000000000000000000000000000000000000000000000000000000')
@@ -55,9 +63,10 @@ const genRandomSalt = (): BigInt => {
     return privKey
 }
 
-async function prove(inputs: Object, circuitType:string) {
+async function prove(inputs: Object, circuitType:circuitTypes) {
     let wasm;
     let zkey;
+    inputs = stringifyBigInts(inputs);
     if (circuitType == 'sign'){
         wasm = signWasm;
         zkey = signZkey;
@@ -67,7 +76,11 @@ async function prove(inputs: Object, circuitType:string) {
     } else if (circuitType == 'reveal') {
         wasm = revealWasm;
         zkey = revealZkey;
-    } else {
+    } else if (circuitType == 'register') {
+        wasm = registerWasm;
+        zkey = registerZkey;
+    }
+    else {
         return { proof: null, publicSignals: null};
     }
     const { proof, publicSignals } = await snarkjs.groth16.fullProve(
@@ -80,7 +93,7 @@ async function prove(inputs: Object, circuitType:string) {
     
 }
 
-async function verify(proof:any, publicSignals:any, circuitType:string) { 
+async function verify(proof:any, publicSignals:any, circuitType:circuitTypes) { 
     let vkeyFile;
     if (circuitType == 'sign'){
         vkeyFile = signVkey;
@@ -88,6 +101,8 @@ async function verify(proof:any, publicSignals:any, circuitType:string) {
         vkeyFile = createGroupVkey;
     } else if (circuitType == 'reveal'){
         vkeyFile = revealVkey;
+    } else if (circuitType == 'register'){
+        vkeyFile = registerVkey;
     } else {
         return null;
     }
@@ -96,8 +111,29 @@ async function verify(proof:any, publicSignals:any, circuitType:string) {
     return res;
   }
 
-function formatMessage(str:string):BigInt {
-    return BigInt(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(str)));
+function formatMessage(str:string):BigInt { // ethers.utils.toUtf8Bytes(str)
+    return BigInt(ethers.utils.solidityKeccak256(["string"], [str])) % SNARK_FIELD_SIZE;
+}
+
+async function getCallData(proof: any, publicSignals: any){
+    const editedProof = unstringifyBigInts(proof);
+    const editedPublicSignals = unstringifyBigInts(publicSignals);
+    const calldata = await snarkjs.groth16.exportSolidityCallData(
+        editedProof,
+        editedPublicSignals
+      );
+    //console.log(calldata);
+    const calldataSplit = calldata.split(",");
+    let _a = eval(calldataSplit.slice(0, 2).join());
+    let _b = eval(calldataSplit.slice(2, 6).join());
+    let _c = eval(calldataSplit.slice(6, 8).join());
+    let _input = eval(calldataSplit.slice(8).join());
+    return {
+        _a,
+        _b,
+        _c,
+        _input
+    };
 }
 
 export {
@@ -107,5 +143,6 @@ export {
     poseidon,
     prove,
     verify,
-    formatMessage
+    formatMessage,
+    getCallData
 }

@@ -14,4 +14,5 @@ contract CoreStorage {
         mapping(uint256 => string[]) revealedMessages; // leaf/pubkey to string/message
     }
     mapping(string => Group) records; // groupname to Group
+    mapping(uint256 => bool) registeredUsers; // public key/hash to exists.
 }
