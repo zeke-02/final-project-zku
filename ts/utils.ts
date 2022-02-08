@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 const snarkjs = require('snarkjs');
 import fs from 'fs';
 const ff = require('ffjavascript');
-const { poseidon } = require('circomlibjs');
+// const { poseidon } = require('circomlibjs');
 import { ethers } from 'ethers';
 const {unstringifyBigInts} = ff.utils;
 
@@ -32,10 +32,10 @@ const registerVkey = './circuits/registerUser/verification_key.json';
 const stringifyBigInts: (obj: object) => any = ff.utils.stringifyBigInts
 
 // Hash up to 5 elements
-const hash5 = (inputs: BigInt[]) => {
-    assert(inputs.length === 5);
-    return poseidon(inputs);
-}
+// const hash5 = (inputs: BigInt[]) => {
+//     assert(inputs.length === 5);
+//     return poseidon(inputs);
+// }
 
 const SNARK_FIELD_SIZE = BigInt(21888242871839275222246405745257275088548364400416034343698204186575808495617);
 
@@ -137,10 +137,10 @@ async function getCallData(proof: any, publicSignals: any){
 }
 
 export {
-    hash5,
+    //hash5,
     genRandomSalt,
     stringifyBigInts,
-    poseidon,
+    //poseidon,
     prove,
     verify,
     formatMessage,

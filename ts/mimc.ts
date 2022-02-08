@@ -1,11 +1,11 @@
 import bigInt from "big-integer";
 import { BigInteger } from "big-integer";
 
-export const p = bigInt(
+export const p = BigInt(
   "21888242871839275222246405745257275088548364400416034343698204186575808495617"
 );
 
-const c = [
+const c= [
   "0",
   "7120861356467848435263064379192047478074060781135320967663101236819528304084",
   "5024705281721889198577876690145313457398658950011302225525409148828000436681",
@@ -226,48 +226,50 @@ const c = [
   "11050822248291117548220126630860474473945266276626263036056336623671308219529",
   "2119542016932434047340813757208803962484943912710204325088879681995922344971",
   "0",
-].map((n) => bigInt(n));
+].map((n) => BigInt(n));
 
 class FeistelState {
-  l: BigInteger;
-  r: BigInteger;
+  l: bigint;
+  r: bigint;
   rounds: number;
-  k: BigInteger;
+  k: bigint;
 
-  constructor(rounds: number, k: BigInteger) {
-    this.l = bigInt(0);
-    this.r = bigInt(0);
+  constructor(rounds: number, k: bigint) {
+    this.l = BigInt(0);
+    this.r = BigInt(0);
     this.rounds = rounds;
     this.k = k;
   }
 
-  inject(elt: BigInteger): void {
-    this.l = this.l.add(elt).mod(p);
+  inject(elt: bigint): void {
+    this.l = (this.l + elt) % p;
   }
 
   mix(): void {
     for (let i = 0; i < this.rounds - 1; i++) {
-      const t = this.k.add(this.l).add(c[i]).mod(p);
-      const lNew = t.modPow(5, p).add(this.r).mod(p);
+      const t = (this.k + this.l + c[i]) % (p);
+      const lNew = (((t ** BigInt(5))% p) + this.r) % p;
+      //const lNew = t.modPow(5, p).add(this.r).mod(p);
       this.r = this.l;
       this.l = lNew;
     }
-    const t = this.k.add(this.l).mod(p);
-    this.r = t.modPow(5, p).add(this.r).mod(p);
+    const t = (this.k + this.l) % p;
+    this.r = (((t ** BigInt(5)) % p) + this.r) % p;
+    //this.r = t.modPow(5, p).add(this.r).mod(p);
   }
 }
 
 function mimcSponge(
-  inputs: BigInteger[],
+  inputs: bigint[],
   nOutputs: number,
   rounds: number
-): BigInteger[] {
-  const state = new FeistelState(rounds, bigInt(0));
+): bigint[] {
+  const state = new FeistelState(rounds, BigInt(0));
   for (const elt of inputs) {
     state.inject(elt);
     state.mix();
   }
-  const outputs: BigInteger[] = [state.l];
+  const outputs: bigint[] = [state.l];
   for (let i = 0; i < nOutputs - 1; i++) {
     state.mix();
     outputs.push(state.l);
@@ -291,19 +293,8 @@ export const modPBigIntNative = (x: BigInteger): BigInteger => {
   return ret;
 };
 
-export const mimcWithRounds =
-  (rounds: number) =>
-  (...inputs: number[]) =>
-    mimcSponge(
-      inputs.map((n) => modPBigInt(n)),
-      1,
-      rounds
-    )[0];
-
-const mimcHash = mimcWithRounds(220);
-
-const MIMC = (inputs:any) => {
-  return mimcSponge(inputs, 1, 220)[0]; 
+const MiMC = (inputs:any) => {
+  return BigInt(mimcSponge(inputs, 1, 220)[0]); 
 }
 
-export default MIMC;
+export default MiMC;

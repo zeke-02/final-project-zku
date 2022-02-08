@@ -7,12 +7,23 @@ contract CoreStorage {
     mapping (string => bool) nameExists; // If groupname to whether it exists
     mapping (uint256 => bool) rootExists;
     mapping (uint256 => string) rootToName;
-    struct Group {
-        uint256 root;
-        uint256[] messageAttestations;
-        uint256 currMessageAttestation;
-        mapping(uint256 => string[]) revealedMessages; // leaf/pubkey to string/message
+    uint[] public roots;
+    uint[] public users;
+
+    struct Message {
+        string text;
+        bool revealed;
+        uint256 leaf;
+        uint256 msgAttestation;
     }
-    mapping(string => Group) records; // groupname to Group
-    mapping(uint256 => bool) registeredUsers; // public key/hash to exists.
+    mapping(uint256 => Message[]) public messages; //group root to all the messages.
+    // maps group names to hash of public keys
+    struct Group {
+        string name;
+        uint256[] users;
+        uint256 numMessages;
+    }
+    mapping(uint256 => Group) public groups; //root to group
+
+    mapping(uint256 => bool) public registeredUsers; // public key hash to exists
 }
