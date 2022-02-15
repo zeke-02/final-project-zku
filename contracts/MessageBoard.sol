@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 import "./Core_Storage.sol";
 import "./revealVerify.sol";
@@ -20,7 +21,7 @@ contract MessageBoard is CoreStorage {
     event MessageRevealed(uint256 indexed root, uint256 leaf);
     event UserRegistered(uint indexed leaf);
 
-    constructor (address _signVerifier, address _rootVerifier, address _revealVerifier, address _registerVerifier) public {
+    constructor (address _signVerifier, address _rootVerifier, address _revealVerifier, address _registerVerifier) {
         signVerifier = SignVerifier(_signVerifier);
         revealVerifier = RevealVerifier(_revealVerifier);
         rootVerifier = RootVerifier(_rootVerifier);
@@ -35,14 +36,37 @@ contract MessageBoard is CoreStorage {
         uint256[2] memory _c,
         uint256[1] memory _input // public hash of secret preimage key.
     ) public {
+        require(registeredUsers[_input[0]] == false, "a user already exists with that public key");
         require(registerVerifier.verifyProof(_a, _b, _c, _input), "Invalid Register Proof");
         registeredUsers[_input[0]] = true;
         users.push(_input[0]);
         emit UserRegistered(_input[0]);
     }
 
+    function loginUser(
+        uint256[2] memory _a,
+        uint256[2][2] memory _b,
+        uint256[2] memory _c,
+        uint256[1] memory _input
+    ) public view returns (bool) {
+        require(registeredUsers[_input[0]] == true, "a user already exists with that public key");
+        require(registerVerifier.verifyProof(_a, _b, _c, _input), "Invalid Login Proof");
+        return true;
+    }
+
     function isUser(uint256 _pubKey) public view returns (bool) {
         return registeredUsers[_pubKey];
+    }
+
+    function userInGroup(uint256 _pubKey, uint256 _root) public view returns (bool) {
+        uint256[] storage users = groups[_root];
+        uint256 length = users.length;
+        for (uint i = 0; i < length; i++){
+            if (_pubKey == users[i]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function sendMessage(
@@ -51,10 +75,12 @@ contract MessageBoard is CoreStorage {
         uint256[2] memory _a,
         uint256[2][2] memory _b,
         uint256[2] memory _c,
-        uint256[3] memory _input // msgAttestation, root, msgHash.
+        uint256[4] memory _input // msgAttestation, root, leaf, msgHash
     ) public {
         //checks then effects
+        require(isUser(_input[2]), "User must be registered");
         require(rootExists[_input[1]], "Specified Group Root Does Not Exist");
+        require(userInGroup(_input[2], _input[1]), "user not in specified group");
         require(signVerifier.verifyProof(_a, _b, _c, _input), "Invalid Message Proof");
         //console.log(uint256(keccak256(abi.encodePacked(_message))) - 2*snark_scalar_field);
         //console.log(_input[2]);
@@ -66,9 +92,8 @@ contract MessageBoard is CoreStorage {
         Message memory message;
         message.text = _message;
         message.msgAttestation = _input[0];
+        message.leaf = _input[2];
         messages[_input[1]].push(message);
-
-        groups[_input[1]].numMessages++;
     }
 
     // emit corresponding group name (global unique), emit root (global unique), emit groupname => user uses to verify and build proof
@@ -84,9 +109,10 @@ contract MessageBoard is CoreStorage {
         require(!nameExists[_groupname], "Group Name Already Exists!");
         require(!rootExists[_input[0]], "Root Already Exists, i.e. the group you are trying to create already exists!");
         // check whether proof is valid.
+
         require(rootVerifier.verifyProof(_a, _b, _c, _input), "Invalid Root Proof");
         for (uint i = 0; i < _users.length; i++) {
-            //require(isUser(_users[i]), "Leaf must be registered user");
+            require(isUser(_users[i]), "Leaf must be registered user");
         }
 
         emit GroupCreated(_input[0]);
@@ -94,12 +120,11 @@ contract MessageBoard is CoreStorage {
         nameExists[_groupname] = true;
         rootExists[_input[0]] = true;
         rootToName[_input[0]] = _groupname;
+        roots.push(_input[0]);
 
-        // insert new group into groups
-        Group storage group = groups[_input[0]];
-        group.name = _groupname;
-        for (uint i = 0; i < _users.length; i++) {
-            group.users.push(_users[i]);
+        uint256 length = _users.length;
+        for (uint256 i = 0; i < length; i++ ) {
+            groups[_input[0]].push(_users[i]);
         }
     }
 
@@ -124,12 +149,24 @@ contract MessageBoard is CoreStorage {
         }
    }
 
-   function getNumMessages(uint256 _root) public view returns (uint) {
-       require(rootExists[_root], "Invalid root");
-       return groups[_root].numMessages;
-   }
-
    function getUsersLength () public view returns (uint) {
        return users.length;
+   }
+
+   function getGroupUsers (uint256 _root) public view returns (uint256[] memory) {
+       return groups[_root];
+   }
+
+   function getGroupName(uint256 _root) public view returns (string memory) {
+       return rootToName[_root];
+   }
+
+   function getGroupRoots() public view returns (uint256[] memory) {
+       return roots;
+   }
+
+   function getGroupFullInfo(uint256 _root) public view returns (Message[] memory) {
+       require(rootExists[_root], "Group root not found");
+       return messages[_root];
    }
 }

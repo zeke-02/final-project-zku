@@ -51,4 +51,4 @@ template SendMessage(levels) {
     msgAttestation <== hash2.outs[0]; 
 }
 
-component main {public [root, msg]} = SendMessage(9);
+component main {public [root, msg, leaf]} = SendMessage(9);

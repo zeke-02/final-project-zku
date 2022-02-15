@@ -4,6 +4,8 @@ import { IncrementalMerkleTree } from "@zk-kit/incremental-merkle-tree";
 import {  genRandomSalt, prove, getCallData, formatMessage } from '../ts/utils';
 import { MessageBoard } from "../typechain";
 import MIMC from "../ts/mimc"
+import { rootCertificates } from "tls";
+import { send } from "process";
 
 describe("MessageBoard", function () {
     let board: MessageBoard;
@@ -24,105 +26,95 @@ describe("MessageBoard", function () {
 
     it("Create Group Works correctly", async function () {
         const GroupName = "Doe You See Me?";
-    
-        const tree = new IncrementalMerkleTree(MIMC, 9, BigInt(0), 2);
-        const secret = genRandomSalt();
+        let users = [];
+        let secrets = [];
+        let secret1 = genRandomSalt();
+        let pub1 = MIMC([secret1]);
+        let secret2 = genRandomSalt();
+        let pub2 = MIMC([secret2]);
+        let secret3 = genRandomSalt();
+        let pub3 = MIMC([secret3]);
+        let secret4 = genRandomSalt();
+        let pub4 = MIMC([secret4]);
+        let secret5 = genRandomSalt();
+        let pub5 = MIMC([secret5]);
 
-        let leaves: bigint[] = [];
-        for (let i=0;i<5*4 -1; i++){
-            const rand = genRandomSalt();
-            leaves.push(rand);
-            tree.insert(rand);
+        users.push(pub1,pub2,pub3,pub4,pub5);
+        secrets.push(secret1,secret2, secret3, secret4, secret5);
+
+        const tree = new IncrementalMerkleTree(MIMC, 9, BigInt(0), 2);
+
+        for (let i=0; i< users.length; i++) {
+            const proofInputs = {
+                secret: secrets[i],
+                hash: users[i]
+            }
+            const snarkResult = await prove(proofInputs, 'register');
+            const { _a, _b, _c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
+            const registerUserTx = await board.registerUser(_a, _b, _c, _input);
+            tree.insert(users[i]);
         }
+
         const proof: any = tree.createProof(0);
 
         const proofInput = {
             root: tree.root,
-            leaf: proof.leaf,
+            leaf: pub1,
             pathElements: proof.siblings,
             pathIndices: proof.pathIndices,
         };
     
-        const result = await prove(proofInput, 'check-root');
+        const checkRootResult = await prove(proofInput, 'check-root');
     
-        const { _a, _b, _c, _input} = await getCallData(result.proof, result.publicSignals);
+        const { _a, _b, _c, _input} = await getCallData(checkRootResult.proof, checkRootResult.publicSignals);
     
-        const createGroupTx = await board.createGroup(GroupName, leaves, _a, _b, _c, _input);
+        const createGroupTx = await board.createGroup(GroupName, users, _a, _b, _c, _input);
         const finishedTx:any = await createGroupTx.wait();
-        //console.log(finishedTx.events[0].getTransactionReceipt());
-    });
+        
+        let groupNumber = await board.getGroupRoots();
+        console.log(groupNumber[0]);
 
-    it("Correctly Adds Message", async () => {
-        const GroupName = "Doe You See Me?";
-    
-        const tree = new IncrementalMerkleTree(MIMC, 9, BigInt(0), 2);
-        const secret = genRandomSalt();
-        const leaf = MIMC([secret]);
-        tree.insert(leaf);
+        let fullGroupInfo = await board.getGroupUsers(tree.root);
+        console.log(fullGroupInfo);
 
-        let leaves: bigint[] = [];
-        for (let i=0;i<5*4 -1; i++){
-            const rand = genRandomSalt();
-            leaves.push(rand);
-            tree.insert(rand);
-        }
-        const proof: any = tree.createProof(0);
-
-        const proofInput = {
+        const salt = genRandomSalt();
+        const message = JSON.stringify({
+            title: "this is the title",
+            body: "this is the body boiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+        });
+        const sendMessageInputs = {
             root: tree.root,
-            leaf: proof.leaf,
+            leaf: pub1,
             pathElements: proof.siblings,
             pathIndices: proof.pathIndices,
-        };
-        expect(proofInput.leaf).to.be.equal(leaf);
-    
-        const result = await prove(proofInput, 'check-root');
-    
-        let { _a, _b, _c, _input} = await getCallData(result.proof, result.publicSignals);
-    
-        const createGroupTx = await board.createGroup(GroupName, leaves, _a, _b, _c, _input);
-
-        const message = "askldjf;dlkajsdl;fkja;lsjdfdl;kjas;ldkdfjf;lajsd;lfja;lskjdf;ljas;ldkfjlaksjd;lfkja;lskjdf;lkajsd;lkfja;sjdf";
-        const salt = genRandomSalt();
-        const msgInput = {
-            msg: formatMessage(message),
             salt,
-            root: tree.root,
-            leaf: leaf,
-            secret,
-            pathElements:proof.siblings,
-            pathIndices:proof.pathIndices
-        }
-        //console.log(msgInput);
-        const result2 = await prove(msgInput, 'sign');
-        //console.log(result2.publicSignals);
-    
-        const calldata = await getCallData(result2.proof, result2.publicSignals);
-        //console.log(calldata);
-        const addMessageTx = await board.sendMessage(message, calldata._a, calldata._b, calldata._c, calldata._input);
-        const finalTx :any = await addMessageTx.wait();
+            secret: secret1,
+            msg: formatMessage(message)
+        };
+
+        let snarkResult = await prove(sendMessageInputs, 'sign');
+        let sendCallData = await getCallData(snarkResult.proof, snarkResult.publicSignals);
+        const sendTx = await board.sendMessage(message, sendCallData._a, sendCallData._b, sendCallData._c, sendCallData._input);
+        let GroupUsers = await board.getGroupFullInfo(tree.root);
 
         const revealInput = {
+            msgAttestation: snarkResult.publicSignals[0],
             msg: formatMessage(message),
-            msgAttestation: result2.publicSignals[0],
-            salt,
-            leaf,
-            secret,
+            secret: secret1,
+            leaf: pub1,
             root: tree.root,
-            pathElements:proof.siblings,
-            pathIndices:proof.pathIndices
+            pathElements: proof.siblings,
+            pathIndices: proof.pathIndices,
+            salt
         };
-
-        const result3 = await prove(revealInput, 'reveal');
-        const calldata2 = await getCallData(result3.proof, result3.publicSignals);
-        const revealTx = await board.revealMessage(calldata2._a, calldata2._b, calldata2._c, calldata2._input);
-        const final = await revealTx.wait();
-        console.log(final);
-        const filter = board.filters.MessageRevealed();
-        const data = await board.queryFilter(filter);
-        console.log(data[0].args);
-        const msg = await board.messages(tree.root, 0);
-        console.log(msg);
-
+        snarkResult = await prove(revealInput, 'reveal');
+        let revealCallData = await getCallData(snarkResult.proof, snarkResult.publicSignals);
+        const revealTx = await board.revealMessage(revealCallData._a, revealCallData._b, revealCallData._c, revealCallData._input);
+        GroupUsers = await board.getGroupFullInfo(tree.root);
+        console.log(GroupUsers);
+        let usersLength = await board.getUsersLength();
+        console.log(usersLength);
+        let Name = await board.getGroupName(tree.root);
+        console.log(Name);
     });
 });
