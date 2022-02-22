@@ -50,8 +50,8 @@ describe("MessageBoard", function () {
                 hash: users[i]
             }
             const snarkResult = await prove(proofInputs, 'register');
-            const { _a, _b, _c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
-            const registerUserTx = await board.registerUser(_a, _b, _c, _input);
+                const { _a, _b, _c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
+                const registerUserTx = await board.registerUser(_a, _b, _c, _input);
             tree.insert(users[i]);
         }
 
@@ -69,10 +69,11 @@ describe("MessageBoard", function () {
         const { _a, _b, _c, _input} = await getCallData(checkRootResult.proof, checkRootResult.publicSignals);
     
         const createGroupTx = await board.createGroup(GroupName, users, _a, _b, _c, _input);
-        const finishedTx:any = await createGroupTx.wait();
+        const finishedTx: any = await createGroupTx.wait();
         
         let groupNumber = await board.getGroupRoots();
         console.log(groupNumber[0]);
+        
 
         let fullGroupInfo = await board.getGroupUsers(tree.root);
         console.log(fullGroupInfo);

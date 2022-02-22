@@ -49,7 +49,7 @@ contract MessageBoard is CoreStorage {
         uint256[2] memory _c,
         uint256[1] memory _input
     ) public view returns (bool) {
-        require(registeredUsers[_input[0]] == true, "a user already exists with that public key");
+        require(registeredUsers[_input[0]] == true, "a user doesn't exists with that public key");
         require(registerVerifier.verifyProof(_a, _b, _c, _input), "Invalid Login Proof");
         return true;
     }
@@ -79,13 +79,14 @@ contract MessageBoard is CoreStorage {
     ) public {
         //checks then effects
         require(isUser(_input[2]), "User must be registered");
+        require(!msgAttestations[_input[0]], "Please change salt, must have unique msgAttestation");
         require(rootExists[_input[1]], "Specified Group Root Does Not Exist");
         require(userInGroup(_input[2], _input[1]), "user not in specified group");
         require(signVerifier.verifyProof(_a, _b, _c, _input), "Invalid Message Proof");
         //console.log(uint256(keccak256(abi.encodePacked(_message))) - 2*snark_scalar_field);
         //console.log(_input[2]);
         //require(uint256(keccak256(abi.encodePacked(_message))) % snark_scalar_field == _input[2], "Incorrect Message String");
-
+        msgAttestations[_input[0]] = true;
         emit MessageAdded(_input[1],_input[0]);
 
         // add message to messages
@@ -154,10 +155,12 @@ contract MessageBoard is CoreStorage {
    }
 
    function getGroupUsers (uint256 _root) public view returns (uint256[] memory) {
+       require(rootExists[_root], "root doesn't exist");
        return groups[_root];
    }
 
    function getGroupName(uint256 _root) public view returns (string memory) {
+       require(rootExists[_root], "root doesn't exist");
        return rootToName[_root];
    }
 
@@ -166,7 +169,11 @@ contract MessageBoard is CoreStorage {
    }
 
    function getGroupFullInfo(uint256 _root) public view returns (Message[] memory) {
-       require(rootExists[_root], "Group root not found");
+       require(rootExists[_root], "root doesn't exist");
        return messages[_root];
+   }
+
+   function getUsers() public view returns (uint256[] memory) {
+       return users;
    }
 }

@@ -8,6 +8,7 @@ contract CoreStorage {
     mapping (uint256 => bool) rootExists;
     mapping (uint256 => string) rootToName;
     mapping(uint256 => bool) public registeredUsers; // public key hash to exists
+    mapping(uint256 => bool) public msgAttestations; //msgAttestation to exists
     uint256[] public roots; //all stored roots
     uint256[] public users; //all stored users
 
@@ -17,7 +18,7 @@ contract CoreStorage {
         uint256 leaf;
         uint256 msgAttestation; // unique to the message. doesn't have to be global unique.
     }
-    mapping(uint256 => Message[]) public messages; //group root to all the messages.
+    mapping(uint256 => Message[]) public messages; //group root to all the messages
     mapping(uint256 => uint256[]) public groups; //group root to associated users
     // maps group names to hash of public keys
 }
