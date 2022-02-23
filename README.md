@@ -1,4 +1,4 @@
-# Advanced Sample Hardhat Project
+# Simple ZK Message Board
 
 This project is a message board using zksnarks.
 
