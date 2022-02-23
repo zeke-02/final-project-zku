@@ -9,10 +9,6 @@ const Message = (props) => {
         text,
         msgAttestation
     } = props;
-    console.log(revealed);
-    console.log(owner);
-    console.log(text);
-    console.log(msgAttestation);
     const { title, body } = JSON.parse(text);
     // const author = revealed ? (<h5>Owner: {owner}</h5>) : <h5>Owner: anonymous</h5>;
     return (
