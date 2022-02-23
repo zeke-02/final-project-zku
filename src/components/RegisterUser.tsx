@@ -49,8 +49,7 @@ const RegisterButton = (props) => {
             const { _a, _b, _c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
             const registerUserTx = await writeContract.registerUser(_a, _b, _c, _input);
             setCurrentUser(leaf);
-            console.log(leaf);
-            console.log(utils.hexlify(leaf));
+            localStorage.setItem('secret', secret.toString());
             navigator.clipboard.writeText(`Public Key: ${utils.hexlify(leaf)} \nPrivate Key: ${utils.hexlify(secret)}`);
             window.confirm(`Copied your Key Pair, please store them somewhere safe.`);
             

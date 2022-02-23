@@ -93,7 +93,6 @@ contract MessageBoard is CoreStorage {
         Message memory message;
         message.text = _message;
         message.msgAttestation = _input[0];
-        message.leaf = _input[2];
         messages[_input[1]].push(message);
     }
 

@@ -26,8 +26,8 @@ describe("MessageBoard", function () {
 
     it("Create Group Works correctly", async function () {
         const GroupName = "Doe You See Me?";
-        let users = [];
-        let secrets = [];
+        let users: any = [];
+        let secrets: any = [];
         let secret1 = genRandomSalt();
         let pub1 = MIMC([secret1]);
         let secret2 = genRandomSalt();
@@ -92,9 +92,10 @@ describe("MessageBoard", function () {
             secret: secret1,
             msg: formatMessage(message)
         };
-
+        console.log(sendMessageInputs);
         let snarkResult = await prove(sendMessageInputs, 'sign');
         let sendCallData = await getCallData(snarkResult.proof, snarkResult.publicSignals);
+        console.log(snarkResult.publicSignals);
         const sendTx = await board.sendMessage(message, sendCallData._a, sendCallData._b, sendCallData._c, sendCallData._input);
         let GroupUsers = await board.getGroupFullInfo(tree.root);
 
@@ -112,10 +113,9 @@ describe("MessageBoard", function () {
         let revealCallData = await getCallData(snarkResult.proof, snarkResult.publicSignals);
         const revealTx = await board.revealMessage(revealCallData._a, revealCallData._b, revealCallData._c, revealCallData._input);
         GroupUsers = await board.getGroupFullInfo(tree.root);
-        console.log(GroupUsers);
+        //console.log(GroupUsers);
         let usersLength = await board.getUsersLength();
-        console.log(usersLength);
+        //console.log(usersLength);
         let Name = await board.getGroupName(tree.root);
-        console.log(Name);
     });
 });

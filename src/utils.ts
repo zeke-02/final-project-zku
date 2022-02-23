@@ -151,7 +151,7 @@ async function verify(proof:any, publicSignals:any, circuitType:circuitTypes) {
     return res;
   }
 
-function formatMessage(str:string):BigInt { // ethers.utils.toUtf8Bytes(str)
+function keccak(str:string):BigInt { // ethers.utils.toUtf8Bytes(str)
     return BigInt(ethers.utils.solidityKeccak256(["string"], [str])) % SNARK_FIELD_SIZE;
 }
 
@@ -181,7 +181,7 @@ export {
     stringifyBigInts,
     prove,
     verify,
-    formatMessage,
+    keccak,
     getCallData,
     genPair
 }

@@ -3,7 +3,7 @@ import {globalContext} from "../App";
 import {useNavigate} from "react-router-dom";
 import {IncrementalMerkleTree} from "@zk-kit/incremental-merkle-tree";
 import MiMC from "../mimc";
-import {formatMessage, getCallData, prove, verify} from "../utils";
+import {keccak, getCallData, prove, verify} from "../utils";
 import {utils} from "ethers";
 const _ = require('lodash');
 
@@ -32,14 +32,13 @@ const SendMessage = (props)=> {
     const [salt, setSalt] = useState("");
     const [group, setGroup] = useState(groups[0].name ? groups[0].name : "");
     const [loading, setLoading] = useState(false);
-    console.log(groups);
     const {
         users
     } = props;
     let navigate = useNavigate();
     if (! currentUser){
-        navigate('/');
         alert('you must be signed in to send a message');
+        navigate('/');
     }
     const handleSubmit = useCallback(async(e)=>{
         
@@ -47,6 +46,7 @@ const SendMessage = (props)=> {
         e.preventDefault();
         setLoading(true);
         let [selected_group] = groups.filter(g => g.name == group);
+        console.log(selected_group.users);
         if (!selected_group.users.find(leaf => BigInt(leaf) == BigInt(currentUser as any))){
             alert('you must be part of the group to send a message from it');
             setLoading(false);
@@ -60,7 +60,7 @@ const SendMessage = (props)=> {
         const message = JSON.stringify({
             title,
             body
-        })
+        });
         const proof: any = tree.createProof(user_index);
         const secret = localStorage.getItem('secret');
         const sendMessageInputs = {
@@ -68,9 +68,9 @@ const SendMessage = (props)=> {
             leaf: currentUser,
             pathElements: proof.siblings,
             pathIndices: proof.pathIndices,
-            salt,
+            salt: keccak(salt),
             secret: BigInt(secret as any),
-            msg: formatMessage(message)
+            msg: keccak(message)
         };
         
         const snarkResult = await prove(sendMessageInputs, 'sign');
@@ -81,21 +81,22 @@ const SendMessage = (props)=> {
         //     return;
         // }
         const {_a,_b,_c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
+        console.log(_input[0]);
         if (writeContract) {
             try {
                 const TxResponse = await writeContract.sendMessage(message,_a,_b,_c,_input);
-                navigator.clipboard.writeText(`Salt: ${salt}, msgAttestation: ${utils.hexlify(_input[0])}`);
+                navigator.clipboard.writeText(`Salt: ${salt}\n msgAttestation: ${utils.hexlify(_input[0])}`);
                 window.confirm(`Copied the salt, please store them somewhere safe.`);
+                setLoading(false);
                 navigate('/');
             } catch (err) {
+                setLoading(false);
                 console.error(err);
             }
         }
         
         //https://dev.to/rdegges/please-stop-using-local-storage-1i04
-        setLoading(false);
-        
-    }, [title, body, group]);
+    }, [title, body, salt]);
     return (
         <>
             {!loading ? (

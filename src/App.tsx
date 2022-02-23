@@ -12,6 +12,7 @@ import SendMessage from "./components/SendMessage";
 import LogoutButton from "./components/LogoutButton";
 
 import MessageBoard from './artifacts/MessageBoard.json';
+import RevealMessage from "./components/RevealMessage";
 
 // const ff = require('ffjavascript');
 // const stringifyBigInts: (obj: object) => any = ff.utils.stringifyBigInts
@@ -45,9 +46,10 @@ function App() {
 	const [groups, setGroups] = useState<Group[]>([]);
 	const [signer, setSigner] = useState(null);
 	const [users, setUsers] = useState(null);
-	const [currentUser, setCurrentUser] = useState(null);
+	const [currentUser, setCurrentUser] = useState<any>(null);
 	const [writeContract, setWriteContract] = useState<any>(null);
 	const [provider, setProvider] = useState(null);
+
 
 	async function getUsers() {
 		if (readContract) {
@@ -102,21 +104,19 @@ function App() {
 			readContract.on("MessageRevealed", getGroups);
 		}
 	},[readContract]);
-	
 	window.ethereum.on('accountsChanged', (newAccount) => {
 		setSigner(null);
 		setCurrentUser(null);
 	});
 
-	useEffect(()=> {
-		if (!window.ethereum.isConnected()) {
-			alert("please reconnect");
-			localStorage.removeItem('secret');
-			setCurrentUser(null);
-			setProvider(null);
-			setSigner(null); 
-		}
-	})
+	// useEffect(()=> {
+	// 	if (!window.ethereum.isConnected()) {
+	// 		localStorage.removeItem('secret');
+	// 		setCurrentUser(null);
+	// 		setProvider(null);
+	// 		setSigner(null); 
+	// 	}
+	// }, []);
 	return (
 		<globalContext.Provider value= {{
 			readContract,
@@ -177,7 +177,7 @@ function App() {
 				}
 			</div>
 			<Router>
-				{ currentUser && readContract &&
+				{ readContract && currentUser &&
 				<nav>
 					<div>
 						<Link to="/create-group">Create A Group!</Link>
@@ -207,6 +207,10 @@ function App() {
 						users={users}
 						writeContract={writeContract}
 					/>}/>
+					<Route path="/reveal" element={<RevealMessage
+						writeContract={writeContract}
+						currentUser={currentUser}
+					/>}></Route>
 				</Routes>
 			</Router>
 		</globalContext.Provider>

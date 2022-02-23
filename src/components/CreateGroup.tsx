@@ -39,7 +39,9 @@ const CreateGroup = (props) => {
             pathElements: proof.siblings,
             pathIndices: proof.pathIndices,
         };
+        console.log(proofInput);
         const snarkResult = await prove(proofInput, 'check-root');
+        console.log(snarkResult.publicSignals);
         // const isValid = await verify(snarkResult.proof, snarkResult.publicSignals, 'check-root');
         
         // if (!isValid) {
