@@ -10,7 +10,6 @@ const Message = (props) => {
         msgAttestation
     } = props;
     const { title, body } = JSON.parse(text);
-    // const author = revealed ? (<h5>Owner: {owner}</h5>) : <h5>Owner: anonymous</h5>;
     return (
         <>
         <article>

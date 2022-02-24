@@ -28,7 +28,6 @@ const RevealMessage = (props) => {
         //get the message
         let message;
         let group;
-        console.log(attestation);
         for (let i = 0; i < groups.length; i++){
             let _group = groups[i];
             message = _.find(_group.messages, (msg) => {

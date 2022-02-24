@@ -146,7 +146,7 @@ async function verify(proof:any, publicSignals:any, circuitType:circuitTypes) {
         return null;
     }
     let resp = await fetch(vkeyFile);
-    let vKey = resp.json();
+    let vKey = await resp.json();
     const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
     return res;
   }

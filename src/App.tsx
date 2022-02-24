@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import {BrowserRouter as Router, Routes,Route, Link} from 'react-router-dom';
 import {utils} from "ethers";
+import fetch from 'node-fetch';
 
 import RegisterButton from "./components/RegisterUser";
 import ConnectButton from "./components/ConnectButton";
@@ -49,6 +50,7 @@ function App() {
 	const [currentUser, setCurrentUser] = useState<any>(null);
 	const [writeContract, setWriteContract] = useState<any>(null);
 	const [provider, setProvider] = useState(null);
+	const [loading, setLoading] = useState(false);
 
 
 	async function getUsers() {
@@ -139,30 +141,27 @@ function App() {
 				/>
 			</div>
 			<div className="register">
-			{ signer &&
+			{ signer && !currentUser &&
 				(
 					<>
 					<RegisterButton
 						setCurrentUser = {setCurrentUser}
+						loading = {loading}
+						setLoading = {setLoading}
 					/>
+					<div className="login">
+						<LoginButton
+						setCurrentUser = {setCurrentUser}
+						loading = {loading}
+						setLoading = {setLoading}
+						/>
+					</div>
 					</>
 					
 				)
 				}
 			
 			</div>
-			{ signer &&
-				(
-					<>
-					<div className="login">
-						<LoginButton
-						setCurrentUser = {setCurrentUser}
-						/>
-					</div>	
-					</>
-					
-				)
-				}
 			<div className="current-user">
 				{ currentUser &&
 				(
