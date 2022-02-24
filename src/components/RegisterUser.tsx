@@ -29,7 +29,7 @@ const RegisterButton = (props) => {
         mounted.current = true; // Will set it to true on mount ...
         return () => { mounted.current = false; }; // ... and to false on unmount
     }, []);
-    
+
     const register = useCallback(async(readContract, writeContract, setCurrentUser)=>{
         setLoading(true);
         if (readContract) {

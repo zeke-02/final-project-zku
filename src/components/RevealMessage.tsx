@@ -1,4 +1,4 @@
-import {useState, useContext, useCallback} from "react";
+import {useState, useContext, useCallback, useEffect, useRef} from "react";
 import {globalContext} from "../App";
 import {useNavigate} from "react-router-dom";
 import {IncrementalMerkleTree} from "@zk-kit/incremental-merkle-tree";
@@ -16,6 +16,11 @@ const RevealMessage = (props) => {
     const [attestation, setAttestation] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const mounted = useRef(false);
+    useEffect(() => {
+        mounted.current = true; // Will set it to true on mount ...
+        return () => { mounted.current = false; }; // ... and to false on unmount
+    }, []);
 
     const reveal = useCallback(async (e)=>{
         e.preventDefault();
@@ -39,20 +44,16 @@ const RevealMessage = (props) => {
             }
         }
         
-        
-
         if (!group) {
             setLoading(false);
             alert('incorrect user or missing group with that attestation');
             return;
         }
-        console.log(currentUser);
+
         const user_index = group.users.findIndex(leaf => {
-            console.log(BigInt(leaf));
             return BigInt(leaf) == BigInt(currentUser as any);
         });
-        console.log(group.users);
-        console.log(message); 
+
         if (user_index == -1) {
             setLoading(false);
             alert('user not in group');
@@ -77,6 +78,7 @@ const RevealMessage = (props) => {
             msg: keccak(message.text),
             msgAttestation: BigInt(attestation)
         };
+
         try {
             const snarkResult = await prove(inputs, 'reveal');
             const {_a,_b,_c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
@@ -84,9 +86,11 @@ const RevealMessage = (props) => {
             setLoading(false);
             navigate('/');
         } catch (err) {
-            console.log('error');
             console.log(err);
-            setLoading(false);
+            if (mounted.current) {
+                setLoading(false);
+            }
+            
         }      
     },[salt, attestation])
     return (

@@ -1,4 +1,4 @@
-import {useState, useCallback } from "react";
+import {useState, useCallback, useEffect, useRef } from "react";
 import {useNavigate} from "react-router-dom";
 import { IncrementalMerkleTree } from "@zk-kit/incremental-merkle-tree";
 import MiMC from "../mimc";
@@ -19,6 +19,11 @@ const CreateGroup = (props) => {
     const [groupName, setGroupName] = useState("");
     const [ checkedUsers, setCheckedUsers] = useState<any>([]);
     const [loading, setLoading] = useState(false);
+    const mounted = useRef(false);
+    useEffect(() => {
+        mounted.current = true; // Will set it to true on mount ...
+        return () => { mounted.current = false; }; // ... and to false on unmount
+    }, []);
 
     const createGroup = useCallback(async (e)=>{
         setLoading(true);
@@ -39,25 +44,30 @@ const CreateGroup = (props) => {
             pathElements: proof.siblings,
             pathIndices: proof.pathIndices,
         };
-        console.log(proofInput);
         const snarkResult = await prove(proofInput, 'check-root');
-        console.log(snarkResult.publicSignals);
-        // const isValid = await verify(snarkResult.proof, snarkResult.publicSignals, 'check-root');
+        const isValid = await verify(snarkResult.proof, snarkResult.publicSignals, 'check-root');
         
-        // if (!isValid) {
-        //     alert('invalid proof');
-        //     setLoading(false);
-        //     return;
-        // }
+        if (!isValid) {
+            alert('invalid proof');
+            if (mounted.current) {
+                setLoading(false);
+            }
+            return;
+        }
         const { _a, _b, _c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
         try {
             const createGroupTx = await writeContract.createGroup(groupName, [currentUser, ...checkedUsers], _a, _b, _c, _input);
             const txReceipt = await createGroupTx.wait();
+            if (mounted.current) {
+                setLoading(false);
+            }
             navigate('/');
         } catch (err) {
             console.log(err);
             alert("problem calling smart contract");
-            setLoading(false);
+            if (mounted.current) {
+                setLoading(false);
+            }
         }
     },[checkedUsers, groupName]);
     

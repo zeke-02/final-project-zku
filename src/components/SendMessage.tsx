@@ -1,4 +1,4 @@
-import {useState, useContext, useCallback} from "react";
+import {useState, useContext, useCallback, useEffect, useRef} from "react";
 import {globalContext} from "../App";
 import {useNavigate} from "react-router-dom";
 import {IncrementalMerkleTree} from "@zk-kit/incremental-merkle-tree";
@@ -36,6 +36,11 @@ const SendMessage = (props)=> {
         users
     } = props;
     let navigate = useNavigate();
+    const mounted = useRef(false);
+    useEffect(() => {
+        mounted.current = true; // Will set it to true on mount ...
+        return () => { mounted.current = false; }; // ... and to false on unmount
+    }, []);
     if (! currentUser){
         alert('you must be signed in to send a message');
         navigate('/');
@@ -74,24 +79,28 @@ const SendMessage = (props)=> {
         };
         
         const snarkResult = await prove(sendMessageInputs, 'sign');
-        // const isValid = await verify(snarkResult.proof, snarkResult.publicSignals, 'sign');
-        // if (!isValid) {
-        //     alert('invalid proof');
-        //     setLoading(false);
-        //     return;
-        // }
+        const isValid = await verify(snarkResult.proof, snarkResult.publicSignals, 'sign');
+        if (!isValid) {
+            alert('invalid proof');
+            setLoading(false);
+            return;
+        }
         const {_a,_b,_c, _input} = await getCallData(snarkResult.proof, snarkResult.publicSignals);
-        console.log(_input[0]);
         if (writeContract) {
             try {
                 const TxResponse = await writeContract.sendMessage(message,_a,_b,_c,_input);
-                navigator.clipboard.writeText(`Salt: ${salt}\n msgAttestation: ${utils.hexlify(_input[0])}`);
+                navigator.clipboard.writeText(`Salt: ${salt}\nID: ${utils.hexlify(_input[0])}`);
                 window.confirm(`Copied the salt, please store them somewhere safe.`);
-                setLoading(false);
+                if (mounted.current) {
+                    setLoading(false);
+                }
                 navigate('/');
             } catch (err) {
-                setLoading(false);
                 console.error(err);
+                if (mounted.current){
+                    setLoading(false);
+                }
+                
             }
         }
         
