@@ -3,14 +3,15 @@
 This project is a message board using zksnarks.
 
 ```To test locally
+
+npx hardhat node
+npx hardhat run ./scripts/deploy.ts --network localhost
+npm run start
+
 npm install
 cd /src/file-server
 node index.js
 
-cd ../../
-npx hardhat node
-npx hardhat run deploy ./scripts/deploy.ts
-npm run start
 ```
 
 install metamask and import any of the hardhat accounts to metamask.

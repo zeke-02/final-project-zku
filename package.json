@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "react-scripts start"
+    "dev-start": "npx hardhat node && npx hardhat run ./scripts/deploy.ts --network localhost && react-scripts start && npm install && node /src/file-server/index.js"
   },
   "author": "",
   "license": "ISC",
